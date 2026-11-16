@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models.sugerencia import Sugerencia
 from app.schemas.sugerencia import SugerenciaCreate, SugerenciaResponse
 from app.security import verify_api_token
+from app.services.email import email_service
 
 router = APIRouter(prefix="/sugerencias", tags=["Sugerencias"], dependencies=[Depends(verify_api_token)])
 
@@ -31,6 +32,19 @@ async def crear_sugerencia(
     db.add(nueva_sugerencia)
     await db.commit()
     await db.refresh(nueva_sugerencia)
+    
+    # Enviar notificación por email (no bloqueante)
+    try:
+        await email_service.notify_new_sugerencia({
+            "tipo": nueva_sugerencia.tipo.value,
+            "mensaje": nueva_sugerencia.mensaje,
+            "contacto": nueva_sugerencia.contacto,
+            "created_at": nueva_sugerencia.created_at.isoformat() if nueva_sugerencia.created_at else None,
+        })
+    except Exception as e:
+        # Log error but don't fail the request
+        print(f"Error sending email notification: {e}")
+    
     return nueva_sugerencia
 
 

@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models.contacto import Contacto
 from app.schemas.contacto import ContactoCreate, ContactoResponse
 from app.security import verify_api_token
+from app.services.email import email_service
 
 router = APIRouter(prefix="/contacto", tags=["Contacto"], dependencies=[Depends(verify_api_token)])
 
@@ -33,6 +34,21 @@ async def crear_contacto(
     db.add(nuevo_contacto)
     await db.commit()
     await db.refresh(nuevo_contacto)
+    
+    # Enviar notificación por email (no bloqueante)
+    try:
+        await email_service.notify_new_contacto({
+            "nombre": nuevo_contacto.nombre,
+            "email": nuevo_contacto.email,
+            "telefono": nuevo_contacto.telefono,
+            "asunto": nuevo_contacto.asunto.value,
+            "mensaje": nuevo_contacto.mensaje,
+            "created_at": nuevo_contacto.created_at.isoformat() if nuevo_contacto.created_at else None,
+        })
+    except Exception as e:
+        # Log error but don't fail the request
+        print(f"Error sending email notification: {e}")
+    
     return nuevo_contacto
 
 
