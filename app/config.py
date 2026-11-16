@@ -17,7 +17,13 @@ class Settings(BaseSettings):
     API_TOKEN: str = "gomaflex-frontend-secret-token-2024"
     
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:8080", "http://127.0.0.1:5173"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:5173", 
+        "http://localhost:8080", 
+        "http://127.0.0.1:5173",
+        "https://gomaflex.duckdns.org",
+        "https://www.gomaflex.duckdns.org"
+    ]
     
     # Email (para paso posterior)
     SMTP_HOST: str = "smtp.gmail.com"
@@ -25,7 +31,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     EMAIL_FROM: str = "GOMAFLEX <noreply@gomaflex.com>"
-    EMAIL_TO: str = "ventas@gomaflex.com"
+    EMAIL_TO: str = "alexjhoan.25@gmail.com"
 
     class Config:
         env_file = ".env"
