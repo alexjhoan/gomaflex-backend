@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings
 from typing import List
 from functools import lru_cache
 import json
+from pydantic import computed_field
+from pydantic_settings import SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -28,8 +30,9 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "GOMAFLEX <noreply@gomaflex.com>"
     EMAIL_TO: str = "alexjhoan.25@gmail.com"
 
+    @computed_field
     @property
-    def CORS_ORIGINS(self) -> List[str]:
+    def cors_origins(self) -> List[str]:
         try:
             return json.loads(self.CORS_ORIGINS_RAW)
         except (json.JSONDecodeError, TypeError):
@@ -41,9 +44,11 @@ class Settings(BaseSettings):
                 "https://www.gomaflex.duckdns.org"
             ]
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_file = ".env",
+        case_sensitive = True,
+        extra = "ignore"
+    )
 
 
 @lru_cache

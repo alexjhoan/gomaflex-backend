@@ -21,11 +21,9 @@ services:
   backend:
     build: .
     container_name: gomaflex-backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8001:8000"
-    volumes:
-      - .:/app
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/gomaflex
       - DEBUG=true

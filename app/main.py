@@ -59,17 +59,28 @@ app = FastAPI(
 # CORS - debe ir ANTES de los routers
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Debug endpoint to check CORS config and request headers
+@app.get("/debug/cors")
+async def debug_cors(request: Request):
+    return {
+        "cors_origins_configured": settings.cors_origins,
+        "request_origin": request.headers.get("origin"),
+        "request_headers": dict(request.headers),
+    }
+
 # Fallback explícito para preflight OPTIONS (útil si proxy intercepciona)
 @app.options("/{path:path}")
 async def options_handler(request: Request, path: str):
     origin = request.headers.get("origin")
-    if origin in settings.CORS_ORIGINS:
+    logging.info(f"OPTIONS request for path: {path}, origin: {origin}")
+    logging.info(f"CORS_ORIGINS: {settings.cors_origins}")
+    if origin in settings.cors_origins:
         return Response(
             status_code=200,
             headers={
