@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import List
 from functools import lru_cache
+import json
 
 
 class Settings(BaseSettings):
@@ -16,14 +17,8 @@ class Settings(BaseSettings):
     # Security
     API_TOKEN: str = "gomaflex-frontend-secret-token-2024"
     
-    # CORS
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:5173", 
-        "http://localhost:8080", 
-        "http://127.0.0.1:5173",
-        "https://gomaflex.duckdns.org",
-        "https://www.gomaflex.duckdns.org"
-    ]
+    # CORS - parse JSON string from env or use default list
+    CORS_ORIGINS_RAW: str = '["http://localhost:5173","http://localhost:8080","http://127.0.0.1:5173","https://gomaflex.duckdns.org","https://www.gomaflex.duckdns.org"]'
     
     # Email (para paso posterior)
     SMTP_HOST: str = "smtp.gmail.com"
@@ -32,6 +27,19 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     EMAIL_FROM: str = "GOMAFLEX <noreply@gomaflex.com>"
     EMAIL_TO: str = "alexjhoan.25@gmail.com"
+
+    @property
+    def CORS_ORIGINS(self) -> List[str]:
+        try:
+            return json.loads(self.CORS_ORIGINS_RAW)
+        except (json.JSONDecodeError, TypeError):
+            return [
+                "http://localhost:5173", 
+                "http://localhost:8080", 
+                "http://127.0.0.1:5173",
+                "https://gomaflex.duckdns.org",
+                "https://www.gomaflex.duckdns.org"
+            ]
 
     class Config:
         env_file = ".env"
