@@ -1,7 +1,6 @@
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -65,6 +64,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+class StripApiPrefixMiddleware:
+    """Acepta tanto /tasa-cambio/actual como /api/tasa-cambio/actual."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["path"].startswith("/api/"):
+            scope = dict(scope)
+            scope["path"] = scope["path"][len("/api"):]
+            scope["raw_path"] = scope["path"].encode()
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(StripApiPrefixMiddleware)
+
 # Debug endpoint to check CORS config and request headers
 @app.get("/debug/cors")
 async def debug_cors(request: Request):
@@ -73,25 +89,6 @@ async def debug_cors(request: Request):
         "request_origin": request.headers.get("origin"),
         "request_headers": dict(request.headers),
     }
-
-# Fallback explícito para preflight OPTIONS (útil si proxy intercepciona)
-@app.options("/{path:path}")
-async def options_handler(request: Request, path: str):
-    origin = request.headers.get("origin")
-    logging.info(f"OPTIONS request for path: {path}, origin: {origin}")
-    logging.info(f"CORS_ORIGINS: {settings.cors_origins}")
-    if origin in settings.cors_origins:
-        return Response(
-            status_code=200,
-            headers={
-                "Access-Control-Allow-Origin": origin,
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept, X-Requested-With",
-                "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Max-Age": "86400",
-            }
-        )
-    return Response(status_code=400)
 
 # Routers
 app.include_router(sugerencias_router)
